@@ -497,7 +497,7 @@ public class EclipseCursorAndSelection implements CursorService, SelectionServic
             // Reset caret size without disposing - sometimes Eclipse switches to an Insert cursor.
             Caret caret = styledText.getCaret();
             Rectangle oldBounds = caret.getBounds();
-            caret.setSize(caretCachedSize);
+            //caret.setSize(caretCachedSize);
             // Repaint region where old caret used to be - otherwise artifacts might show up
             styledText.redraw(oldBounds.x, oldBounds.y, oldBounds.width, oldBounds.height, true);
         }

@@ -11,9 +11,21 @@ import org.eclipse.swt.widgets.Caret;
 public class CaretUtils {
 
     public static Caret createCaret(CaretType caretType, StyledText styledText) {
+    	
+    	String currentCharacterString = styledText.getTextRange( styledText.getCaretOffset(), 1);
+        int width;
         GC gc = new GC(styledText);
-        final int width = gc.getFontMetrics().getAverageCharWidth();
-        final int height = gc.getFontMetrics().getHeight();
+
+    	if (!currentCharacterString.isEmpty()) {
+	    	char currentCharacter = currentCharacterString.charAt(0);
+	    	System.out.println(currentCharacter);
+	        width = gc.getCharWidth(currentCharacter);
+    	} else {
+	        width = gc.getFontMetrics().getAverageCharWidth();    		
+    	}
+    	System.out.println(width);
+
+    	final int height = gc.getFontMetrics().getHeight();
         gc.dispose();
 
         EvilCaret caret = new EvilCaret(styledText, SWT.NULL, height);
@@ -55,7 +67,26 @@ public class CaretUtils {
 
         @Override
         public void setLocation(int x, int y) {
-            if (shiftLeft) {
+
+        	StyledText styledText = (StyledText)getParent();
+        	String currentCharacterString = styledText.getTextRange( styledText.getCaretOffset(), 1);
+            int width;
+            GC gc = new GC(styledText);
+
+        	if (!currentCharacterString.isEmpty()) {
+    	    	char currentCharacter = currentCharacterString.charAt(0);
+    	    	System.out.println(currentCharacter);
+    	        width = gc.getAdvanceWidth(currentCharacter);
+        	} else {
+    	        width = gc.getFontMetrics().getAverageCharWidth();    		
+        	}
+        	System.out.println("in setLocation: " + width);
+
+        	
+        	setSize(width, getSize().y);
+        	
+        	
+        	if (shiftLeft) {
                 x -= getSize().x;
             }
             // Caret is placed top-left above a character but underline and half-block need to be
