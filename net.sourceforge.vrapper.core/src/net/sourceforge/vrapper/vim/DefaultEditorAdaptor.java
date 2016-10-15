@@ -253,16 +253,26 @@ public class DefaultEditorAdaptor implements EditorAdaptor {
         }
         try {
             configuration.setListenersEnabled(false);
-            String filename = CONFIG_FILE_NAME;
-            final File homeDir = new File(System.getProperty("user.home"));
-            File config = new File(homeDir, filename);
-            if( ! config.exists()) { //if no .vrapperrc, look for _vrapperrc
-                filename = WINDOWS_CONFIG_FILE_NAME;
-                config =  new File(homeDir, filename);
+            // Allow user to override default vrapperrc location by passing in alternate name
+            String overrideVrapperRcFile = System.getProperty("vrapper.vrapperrc");
+            boolean alternateRCLoaded = false;
+            
+            // sourceConfigurationFile method will resolve relatively to user home dir
+            if (overrideVrapperRcFile != null && overrideVrapperRcFile.trim().length() > 0) {
+                alternateRCLoaded =  sourceConfigurationFile(overrideVrapperRcFile.trim());
+                if ( ! alternateRCLoaded) {
+                    VrapperLog.error("Failed to load alternate vrapperrc [" + overrideVrapperRcFile + "]");
+                }
             }
-
-            if (config.exists()) {
-                sourceConfigurationFile(filename);
+            if ( ! alternateRCLoaded) {
+                String filename = CONFIG_FILE_NAME;
+                if ( ! sourceConfigurationFile(filename)) { //if no .vrapperrc, look for _vrapperrc
+                    filename = WINDOWS_CONFIG_FILE_NAME;
+                    if ( ! sourceConfigurationFile(filename)) {
+                        VrapperLog.info("No " + CONFIG_FILE_NAME + " or " + WINDOWS_CONFIG_FILE_NAME
+                                + " found.");
+                    }
+                } 
             }
         } finally {
             configuration.setListenersEnabled(true);
@@ -297,8 +307,7 @@ public class DefaultEditorAdaptor implements EditorAdaptor {
         			//*** skip over everything in a .vimrc file that we don't support ***//
         			trimmed = line.trim().toLowerCase();
         			//ignore comments and key mappings we don't support
-        			if(trimmed.equals("") || trimmed.startsWith("\"") 
-        			        || trimmed.contains("<leader>") || trimmed.contains("<silent>")) {
+        			if(trimmed.equals("") || trimmed.startsWith("\"") || trimmed.contains("<silent>")) {
         				continue;
         			}
         			if(trimmed.startsWith("if")) {
@@ -784,7 +793,7 @@ public class DefaultEditorAdaptor implements EditorAdaptor {
                                 } else {
                                     currentMode.handleKey(next);
                                 }
-                            } 
+                            }
                         } finally {
                             if (keyStrokeTranslator.didMappingSucceed()) {
                                 mappingStack.pop();
