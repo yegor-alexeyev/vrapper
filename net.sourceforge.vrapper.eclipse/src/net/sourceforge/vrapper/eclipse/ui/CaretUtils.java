@@ -5,47 +5,55 @@ import net.sourceforge.vrapper.utils.CaretType;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Caret;
 
 public class CaretUtils {
 
-    public static Caret createCaret(CaretType caretType, StyledText styledText) {
-    	
-    	String currentCharacterString = styledText.getTextRange( styledText.getCaretOffset(), 1);
+	public static Point getCaretDimensions(StyledText styledText) {
         int width;
         GC gc = new GC(styledText);
-
-    	if (!currentCharacterString.isEmpty()) {
-	    	char currentCharacter = currentCharacterString.charAt(0);
-	    	System.out.println(currentCharacter);
-	        width = gc.getCharWidth(currentCharacter);
+        if (styledText.getCaretOffset() + 1 <= styledText.getCharCount()) {
+	    	String currentCharacterString = styledText.getTextRange( styledText.getCaretOffset(), 1);
+	
+	    	if (currentCharacterString.isEmpty()) {
+		        width = gc.getFontMetrics().getAverageCharWidth()*3/4;    		
+	    	} else {
+		    	char currentCharacter = currentCharacterString.charAt(0);		    	
+		        width = currentCharacter == ' ' ? gc.getFontMetrics().getAverageCharWidth()*3/4 : gc.getCharWidth(currentCharacter);
+	    	}
     	} else {
-	        width = gc.getFontMetrics().getAverageCharWidth();    		
+    		width = gc.getFontMetrics().getAverageCharWidth()*3/4;
     	}
-    	System.out.println(width);
-
     	final int height = gc.getFontMetrics().getHeight();
         gc.dispose();
+        return new Point(width, height);
+	}
+	
+    public static Caret createCaret(CaretType caretType, StyledText styledText) {
 
-        EvilCaret caret = new EvilCaret(styledText, SWT.NULL, height);
+    	Point caretDimensions = CaretUtils.getCaretDimensions(styledText);
+
+
+        EvilCaret caret = new EvilCaret(styledText, SWT.NULL, caretDimensions.y);
 
         switch (caretType) {
         case VERTICAL_BAR:
-            caret.setSize(2, height);
+            caret.setSize(2, caretDimensions.y);
             break;
         case RECTANGULAR:
-            caret.setSize(width, height);
+            caret.setSize(caretDimensions);
             break;
         case LEFT_SHIFTED_RECTANGULAR:
-            caret.setSize(width, height);
+            caret.setSize(caretDimensions);
             caret.setShiftLeft(true);
             break;
         case HALF_RECT:
-            caret.setSize(width, height / 2);
+            caret.setSize(caretDimensions.x, caretDimensions.y / 2);
             break;
         case UNDERLINE:
-            caret.setSize(width, 3);
+            caret.setSize(caretDimensions.x, 3);
             break;
         }
 
@@ -69,21 +77,12 @@ public class CaretUtils {
         public void setLocation(int x, int y) {
 
         	StyledText styledText = (StyledText)getParent();
-        	String currentCharacterString = styledText.getTextRange( styledText.getCaretOffset(), 1);
-            int width;
-            GC gc = new GC(styledText);
 
-        	if (!currentCharacterString.isEmpty()) {
-    	    	char currentCharacter = currentCharacterString.charAt(0);
-    	    	System.out.println(currentCharacter);
-    	        width = gc.getAdvanceWidth(currentCharacter);
-        	} else {
-    	        width = gc.getFontMetrics().getAverageCharWidth();    		
-        	}
-        	System.out.println("in setLocation: " + width);
+        	Point caretDimensions = CaretUtils.getCaretDimensions(styledText);
 
         	
-        	setSize(width, getSize().y);
+        	setSize(caretDimensions);
+//        	setSize(caretDimensions.x, getSize().y);
         	
         	
         	if (shiftLeft) {
