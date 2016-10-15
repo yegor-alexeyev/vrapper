@@ -6,11 +6,13 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.internal.DPIUtil;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Caret;
 
 public class CaretUtils {
 
+	@SuppressWarnings("restriction")
 	public static Point getCaretDimensions(StyledText styledText) {
         int width;
         GC gc = new GC(styledText);
@@ -21,7 +23,7 @@ public class CaretUtils {
 		        width = gc.getFontMetrics().getAverageCharWidth()*3/4;    		
 	    	} else {
 		    	char currentCharacter = currentCharacterString.charAt(0);		    	
-		        width = currentCharacter == ' ' ? gc.getFontMetrics().getAverageCharWidth()*3/4 : gc.getCharWidth(currentCharacter);
+		        width = currentCharacter == ' ' ? gc.getFontMetrics().getAverageCharWidth()*3/4 : DPIUtil.autoScaleDown(gc.getCharWidth(currentCharacter));
 	    	}
     	} else {
     		width = gc.getFontMetrics().getAverageCharWidth()*3/4;
@@ -74,7 +76,7 @@ public class CaretUtils {
         protected void checkSubclass() {}
 
         @Override
-        public void setLocation(int x, int y) {
+        public void setLocation(Point location) {
 
         	StyledText styledText = (StyledText)getParent();
 
@@ -85,12 +87,9 @@ public class CaretUtils {
 //        	setSize(caretDimensions.x, getSize().y);
         	
         	
-        	if (shiftLeft) {
-                x -= getSize().x;
-            }
             // Caret is placed top-left above a character but underline and half-block need to be
             // at the bottom. Fix this by offsetting with textHeight and correcting by size.
-            super.setLocation(x, y + textHeight - getSize().y);
+            super.setLocation(shiftLeft ? location.x - getSize().x : location.x, location.y + textHeight - getSize().y);
         }
 
         private void setShiftLeft(boolean shift) {
